@@ -71,11 +71,11 @@ class Environment(object):
                 archive = self._open[place]
             except KeyError: # plain folder
                 try:
-                    path = os.path.join(place, name)
+                    path = os.path.join(place, name.decode('utf8'))
                     with open(path, 'rb') as file_:
                         return file_.read()
                 except IOError:
-                    print 'failed to open', path.encode('utf8')
+                    print 'failed to open', path
             else: # zip archive
                 try:
                     return archive.read(name)

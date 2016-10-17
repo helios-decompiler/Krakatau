@@ -28,7 +28,7 @@ def findFiles(target, recursive, prefix):
             assert os.path.isdir(target)
             targets = []
 
-            for root, dirs, files in os.walk(target):
+            for root, dirs, files in os.walk(target.decode('utf8')):
                 targets += [os.path.join(root, fname) for fname in files if fname.endswith(prefix)]
             return targets
         else:

@@ -22,13 +22,14 @@ def readArchive(archive, name):
         return f.read()
 
 def readFile(filename):
-    with open(filename, 'rb') as f:
+    with open(filename.decode('utf8'), 'rb') as f:
         return f.read()
 
 def disassembleSub(readTarget, out, targets, roundtrip=False, outputClassName=True):
     start_time = time.time()
     with out:
         for i, target in enumerate(targets):
+            target = target.encode('utf8')
             print('processing target {}, {}/{} remaining'.format(target, len(targets)-i, len(targets)))
 
             data = readTarget(target)

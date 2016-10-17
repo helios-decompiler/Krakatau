@@ -95,10 +95,11 @@ def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_t
     with e, out:
         printer = visitor.DefaultVisitor()
         for i,target in enumerate(targets):
+            target = target.encode('utf8')
             print('processing target {}, {} remaining'.format(target, len(targets)-i))
 
             try:
-                c = e.getClass(target.decode('utf8'))
+                c = e.getClass(target)
                 makeGraphCB = functools.partial(makeGraph, magic_throw)
                 source = printer.visit(javaclass.generateAST(c, makeGraphCB, skip_errors, add_throws=add_throws))
             except Exception as err:
