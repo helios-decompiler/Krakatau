@@ -95,7 +95,8 @@ def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_t
     with e, out:
         printer = visitor.DefaultVisitor()
         for i,target in enumerate(targets):
-            target = target.encode('utf8')
+            if isinstance(target, unicode):
+                target = target.encode('utf8')
             print('processing target {}, {} remaining'.format(target, len(targets)-i))
 
             try:

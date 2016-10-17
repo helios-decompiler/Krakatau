@@ -66,16 +66,21 @@ class Environment(object):
 
     def _searchForFile(self, name):
         name += '.class'
+        if isinstance(name, str):
+            name = name.decode('utf8')
         for place in self.path:
             try:
                 archive = self._open[place]
             except KeyError: # plain folder
                 try:
-                    path = os.path.join(place, name.decode('utf8'))
+                    path = os.path.join(place, name)
                     with open(path, 'rb') as file_:
                         return file_.read()
                 except IOError:
-                    print 'failed to open', path
+                    encodedPath = path
+                    if isinstance(encodedPath, unicode):
+                        encodedPath = encodedPath.encode('utf8')
+                    print 'failed to open', encodedPath
             else: # zip archive
                 try:
                     return archive.read(name)

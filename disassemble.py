@@ -29,7 +29,8 @@ def disassembleSub(readTarget, out, targets, roundtrip=False, outputClassName=Tr
     start_time = time.time()
     with out:
         for i, target in enumerate(targets):
-            target = target.encode('utf8')
+            if isinstance(target, unicode):
+                target = target.encode('utf8')
             print('processing target {}, {}/{} remaining'.format(target, len(targets)-i, len(targets)))
 
             data = readTarget(target)
