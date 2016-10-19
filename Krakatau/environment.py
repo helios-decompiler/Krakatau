@@ -4,6 +4,7 @@ import zipfile
 from .classfile import ClassFile
 from .classfileformat.reader import Reader
 from .error import ClassLoaderError
+from Krakatau import script_util
 
 class Environment(object):
     def __init__(self):
@@ -65,6 +66,11 @@ class Environment(object):
             return False
 
     def _searchForFile(self, name):
+        if script_util.IS_WINDOWS:
+            # On Windows, back slashes count as forward slashes in an archive
+            # However, Python compares based on name alone.
+            # We end up losing files if we don't convert to forward slashes
+            name = name.replace('\\', '/')
         name += '.class'
         if isinstance(name, str):
             name = name.decode('utf8')
