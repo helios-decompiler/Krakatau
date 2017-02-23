@@ -122,6 +122,7 @@ class ClassDef(object):
                 header += ' implements ' + ', '.join(print_(x) for x in self.interfaces)
 
         lines = [header + ' {'] + indented + ['}']
+        lines = [line.encode('utf8') if isinstance(line, unicode) else line for line in lines]
         return '\n'.join(lines) + '\n'
 
     # Experimental - don't use!

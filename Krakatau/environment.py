@@ -4,6 +4,7 @@ import zipfile
 from .classfile import ClassFile
 from .classfileformat.reader import Reader
 from .error import ClassLoaderError
+from java.stringescape import escapeString
 from Krakatau import script_util
 
 class Environment(object):
@@ -102,7 +103,7 @@ class Environment(object):
         data = self._searchForFile(name)
 
         if data is None:
-            raise ClassLoaderError('ClassNotFoundException', name)
+            raise ClassLoaderError('ClassNotFoundException', escapeString(name.decode('utf8')))
 
         stream = Reader(data=data)
         new = ClassFile(stream)
