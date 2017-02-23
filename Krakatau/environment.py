@@ -89,7 +89,9 @@ class Environment(object):
                     print 'failed to open', encodedPath
             else: # zip archive
                 try:
-                    return archive.read(name)
+                    info = archive.getinfo(name)
+                    info.CRC = None
+                    return archive.read(info)
                 except KeyError:
                     pass
 
