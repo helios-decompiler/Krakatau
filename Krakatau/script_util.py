@@ -162,6 +162,7 @@ class JarWriter(object):
 
     def write(self, cname, data):
         info = zipfile.ZipInfo(cname + self.suffix, (1980, 1, 1, 0, 0, 0))
+        info.flag_bits |= 0x800
         self.zip.writestr(info, data)
         return 'zipfile'
 
