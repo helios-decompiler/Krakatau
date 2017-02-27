@@ -22,7 +22,11 @@ IS_WINDOWS = 'win' in _osname and 'darwin' not in _osname and 'cygwin' not in _o
 def findFiles(target, recursive, prefix):
     if target.endswith('.jar'):
         with zipfile.ZipFile(target, 'r') as archive:
-            return [name.encode('utf8') for name in archive.namelist() if name.endswith(prefix)]
+            names = []
+            for info in archive.infolist():
+                if info.orig_filename.endswith(prefix):
+                    names.append(info.orig_filename)
+            return names
     else:
         if recursive:
             assert os.path.isdir(target)
@@ -38,7 +42,7 @@ def normalizeClassname(name):
     if name.endswith('.class'):
         name = name[:-6]
     # Replacing backslashes is ugly since they can be in valid classnames too, but this seems the best option
-    return name.replace('\\','/').replace('.','/')
+    return name #.replace('\\','/').replace('.','/') Helios: never normalize that stuff
 
 # Windows stuff
 illegal_win_chars = frozenset('<>;:|?*\\/"%')
@@ -163,6 +167,7 @@ class JarWriter(object):
     def write(self, cname, data):
         info = zipfile.ZipInfo(cname + self.suffix, (1980, 1, 1, 0, 0, 0))
         info.flag_bits |= 0x800
+        info.filename = info.orig_filename
         self.zip.writestr(info, data)
         return 'zipfile'
 
