@@ -18,9 +18,10 @@ from Krakatau.classfileformat.classdata import ClassData
 from Krakatau.assembler.disassembly import Disassembler
 
 def readArchive(archive, name):
-    info = archive.getinfo(name.decode('utf8'));
-    info.CRC = None
-    with archive.open(info) as f:
+    for info in archive.infolist():
+        if info.orig_filename == name:
+            targetInfo = info
+    with archive.open(targetInfo) as f:
         return f.read()
 
 def readFile(filename):
