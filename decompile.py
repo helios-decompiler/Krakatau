@@ -10,6 +10,7 @@ from Krakatau.error import ClassLoaderError
 from Krakatau.environment import Environment
 from Krakatau.java import javaclass, visitor
 from Krakatau.java.stringescape import escapeString
+from Krakatau.server import Server
 from Krakatau.verifier.inference_verifier import verifyBytecode
 from Krakatau import script_util
 
@@ -83,10 +84,10 @@ def deleteUnusued(cls):
     del cls.interfaces_raw, cls.cpool
     del cls.attributes
 
-def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_throws=False, magic_throw=False):
-    out = script_util.makeWriter(outpath, '.java')
+def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_throws=False, magic_throw=False, server=None):
+    out = server if server else script_util.makeWriter(outpath, '.java')
 
-    e = Environment()
+    e = Environment(server)
     for part in path:
         e.addToPath(part)
 
@@ -98,7 +99,7 @@ def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_t
             print('processing target {}, {} remaining'.format(target, len(targets)-i))
 
             try:
-                c = e.getClass(target.decode('utf8'))
+                c = e.getClass(target)
                 makeGraphCB = functools.partial(makeGraph, magic_throw)
                 source = printer.visit(javaclass.generateAST(c, makeGraphCB, skip_errors, add_throws=add_throws))
             except Exception as err:
@@ -123,10 +124,18 @@ def decompileClass(path=[], targets=None, outpath=None, skip_errors=False, add_t
         print(len(e.classes) - len(targets), 'extra classes loaded')
 
 if __name__== "__main__":
+    try:
+        import sys
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+    except:
+        pass
+
     print(script_util.copyright)
 
     import argparse
     parser = argparse.ArgumentParser(description='Krakatau decompiler and bytecode analysis tool')
+    parser.add_argument('-port',help='Port of a local server to load files from')
     parser.add_argument('-path',action='append',help='Semicolon seperated paths or jars to search when loading classes')
     parser.add_argument('-out',help='Path to generate source files in')
     parser.add_argument('-nauto', action='store_true', help="Don't attempt to automatically locate the Java standard library. If enabled, you must specify the path explicitly.")
@@ -146,13 +155,25 @@ if __name__== "__main__":
         else:
             print('Unable to find the standard library')
 
+    server = None
+    if args.port:
+        try:
+            server = Server(int(args.port))
+        except Exception as e:
+            print('Failed to connect to server: %s' % e)
+            server = None
+
     if args.path:
         for part in args.path:
             path.extend(part.split(';'))
 
-    if args.target.endswith('.jar'):
-        path.append(args.target)
+    if not server:
+        if args.target.endswith('.jar'):
+            path.append(args.target)
 
-    targets = script_util.findFiles(args.target, args.r, '.class')
-    targets = map(script_util.normalizeClassname, targets)
-    decompileClass(path, targets, args.out, args.skip, magic_throw=args.xmagicthrow)
+        targets = script_util.findFiles(args.target, args.r, '.class')
+        targets = map(script_util.normalizeClassname, targets)
+    else:
+        targets = server.loadTargets()
+
+    decompileClass(path, targets, args.out, args.skip, magic_throw=args.xmagicthrow, server=server)

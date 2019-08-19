@@ -6,10 +6,11 @@ from .classfileformat.reader import Reader
 from .error import ClassLoaderError
 
 class Environment(object):
-    def __init__(self):
+    def __init__(self, server=None):
         self.classes = {}
         self.path = []
         self._open = {}
+        self._server = server
 
     def addToPath(self, path):
         self.path.append(path)
@@ -64,8 +65,8 @@ class Environment(object):
         except ClassLoaderError as e:
             return False
 
-    def _searchForFile(self, name):
-        name += '.class'
+    def _searchForFile(self, originalName):
+        name = originalName + '.class'
         for place in self.path:
             try:
                 archive = self._open[place]
@@ -81,6 +82,12 @@ class Environment(object):
                     return archive.read(name)
                 except KeyError:
                     pass
+
+        try:
+            result = self._server.searchForFile(originalName)
+            if result is not None: return result
+        except:
+            pass
 
     def _loadClass(self, name):
         print "Loading", name[:70]

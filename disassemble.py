@@ -4,6 +4,7 @@ from __future__ import print_function
 import functools
 import os.path
 import time, zipfile, sys
+from Krakatau.server import Server
 
 try:
     from StringIO import StringIO
@@ -53,6 +54,7 @@ if __name__== "__main__":
 
     import argparse
     parser = argparse.ArgumentParser(description='Krakatau decompiler and bytecode analysis tool')
+    parser.add_argument('-port',help='Port of a local server to load files from')
     parser.add_argument('-out', help='Path to generate files in')
     parser.add_argument('-r', action='store_true', help="Process all files in the directory target and subdirectories")
     parser.add_argument('-path', help='Jar to look for class in')
@@ -60,16 +62,28 @@ if __name__== "__main__":
     parser.add_argument('target', help='Name of class or jar file to decompile')
     args = parser.parse_args()
 
-    targets = script_util.findFiles(args.target, args.r, '.class')
+    server = None
+    if args.port:
+        try:
+            server = Server(int(args.port))
+        except Exception as e:
+            print('Failed to connect to server: %s' % e)
+            server = None
 
-    jar = args.path
-    if jar is None and args.target.endswith('.jar'):
-        jar = args.target
+    if not server:
+        targets = script_util.findFiles(args.target, args.r, '.class')
 
-    out = script_util.makeWriter(args.out, '.j')
-    if jar is not None:
-        with zipfile.ZipFile(jar, 'r') as archive:
-            readFunc = functools.partial(readArchive, archive)
-            disassembleSub(readFunc, out, targets, roundtrip=args.roundtrip)
+        jar = args.path
+        if jar is None and args.target.endswith('.jar'):
+            jar = args.target
+
+        out = script_util.makeWriter(args.out, '.j')
+        if jar is not None:
+            with zipfile.ZipFile(jar, 'r') as archive:
+                readFunc = functools.partial(readArchive, archive)
+                disassembleSub(readFunc, out, targets, roundtrip=args.roundtrip)
+        else:
+            disassembleSub(readFile, out, targets, roundtrip=args.roundtrip, outputClassName=False)
     else:
-        disassembleSub(readFile, out, targets, roundtrip=args.roundtrip, outputClassName=False)
+        targets = server.loadTargets()
+        disassembleSub(server.searchForFile, server, targets, roundtrip=args.roundtrip, outputClassName=False)
